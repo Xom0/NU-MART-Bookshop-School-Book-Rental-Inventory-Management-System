@@ -72,6 +72,11 @@ Run:
 .\.venv\Scripts\python.exe app.py
 ```
 
+also generate the database
+```powershell
+.\.venv\Scripts\python.exe scripts\generate_demo_database.py
+```
+
 ### Step 6: Open Nu-Mart
 
 Open a web browser and visit:
