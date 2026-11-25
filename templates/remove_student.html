@@ -1,0 +1,194 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Remove Student · Nu-Mart
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .student-removal-panel {
+        max-width: 680px;
+    }
+
+    .student-removal-panel form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .student-removal-preview {
+        margin-top: 24px;
+        border: 1px solid #e2a6a6;
+    }
+
+    .student-removal-warning {
+        color: #991b1b;
+        font-weight: 600;
+    }
+
+    .student-removal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .student-removal-confirm {
+        background: #b91c1c;
+        color: #ffffff;
+        border: 1px solid #991b1b;
+        border-radius: 6px;
+        padding: 10px 18px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .student-removal-confirm:hover {
+        background: #991b1b;
+    }
+</style>
+
+<div class="page-heading">
+
+    <div>
+        <h1>Remove Student</h1>
+
+        <p>
+            Correct an incorrectly added student record.
+        </p>
+    </div>
+
+    <a
+        class="button light"
+        href="{{ url_for('pages.students') }}"
+    >
+        Back to Students
+    </a>
+
+</div>
+
+<p class="hint">
+    Administrator access is required.
+    Students with rental or receipt history
+    cannot be removed.
+</p>
+
+{% if not preview %}
+
+<section class="panel student-removal-panel">
+
+    <h2>Find Student to Remove</h2>
+
+    <form method="post">
+
+        <input
+            type="hidden"
+            name="action"
+            value="preview"
+        >
+
+        <label>
+            Student ID
+
+            <input
+                name="student_id"
+                placeholder="e.g. ST025"
+                required
+                autofocus
+            >
+        </label>
+
+        <button
+            type="submit"
+            class="primary"
+        >
+            Review Student
+        </button>
+
+    </form>
+
+</section>
+
+{% else %}
+
+<section class="panel student-removal-panel student-removal-preview">
+
+    <h2>Confirm Student Removal</h2>
+
+    <p>
+        <strong>Student ID:</strong>
+        {{ preview.student_id }}
+    </p>
+
+    <p>
+        <strong>Name:</strong>
+        {{ preview.first_name }}
+        {{ preview.last_name }}
+    </p>
+
+    <p>
+        <strong>Grade:</strong>
+        {{ preview.grade }}
+    </p>
+
+    <p>
+        <strong>Class:</strong>
+        {{ preview.class_name }}
+    </p>
+
+    <p>
+        <strong>Enrolment:</strong>
+        {{ preview.enrolment_status }}
+    </p>
+
+    <p class="student-removal-warning">
+        Warning: This permanently removes the student
+        record. Make sure this record was entered
+        incorrectly before confirming.
+    </p>
+
+    <form
+        method="post"
+        onsubmit="return confirm('Permanently remove student {{ preview.student_id }}? This cannot be undone.');"
+    >
+
+        <input
+            type="hidden"
+            name="action"
+            value="confirm"
+        >
+
+        <input
+            type="hidden"
+            name="student_id"
+            value="{{ preview.student_id }}"
+        >
+
+        <div class="student-removal-actions">
+
+            <button
+                type="submit"
+                class="student-removal-confirm"
+            >
+                Confirm Removal
+            </button>
+
+            <a
+                class="button light"
+                href="{{ url_for('pages.remove_student_page') }}"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endif %}
+
+{% endblock %}

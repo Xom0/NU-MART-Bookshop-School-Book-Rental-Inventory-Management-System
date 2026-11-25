@@ -1,0 +1,407 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Rental History · Nu-Mart
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .return-form {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 160px;
+    }
+
+    .return-form label {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .return-form select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        background-color: #ffffff;
+    }
+
+    .return-form button {
+        width: 100%;
+    }
+
+    .return-collector {
+        font-size: 12px;
+        color: #475569;
+    }
+
+    .return-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .condition-good {
+        color: #15803d;
+        font-weight: 600;
+    }
+
+    .condition-fair {
+        color: #a16207;
+        font-weight: 600;
+    }
+
+    .condition-damaged {
+        color: #b91c1c;
+        font-weight: 700;
+    }
+
+    .return-history-table {
+        min-width: 1100px;
+    }
+</style>
+
+<div class="page-heading">
+
+    <div>
+        
+
+        <h1>Rental History</h1>
+
+        <p>
+            View active and returned books,
+            including return dates, book conditions,
+            and the staff members who collected them.
+        </p>
+    </div>
+
+    <a
+        class="button primary"
+        href="{{ url_for('pages.new_rental') }}"
+    >
+        + New rental
+    </a>
+
+</div>
+
+
+<!-- Rental filtering -->
+<form
+    method="get"
+    action="{{ url_for('pages.rentals') }}"
+    class="panel search"
+>
+
+    <label>
+        Filter rentals
+
+        <select name="status">
+
+            <option
+                value="All"
+                {% if status == 'All' %}selected{% endif %}
+            >
+                All rentals
+            </option>
+
+            <option
+                value="Active"
+                {% if status == 'Active' %}selected{% endif %}
+            >
+                Active rentals
+            </option>
+
+            <option
+                value="Returned"
+                {% if status == 'Returned' %}selected{% endif %}
+            >
+                Returned rentals
+            </option>
+
+        </select>
+
+    </label>
+
+    <button
+        class="primary"
+        type="submit"
+    >
+        Apply filter
+    </button>
+
+    <a
+        class="button light"
+        href="{{ url_for('pages.rentals', status='All') }}"
+    >
+        Show all
+    </a>
+
+</form>
+
+
+<!-- Rental history table -->
+<div class="panel table-wrap">
+
+    <table class="return-history-table">
+
+        <thead>
+
+            <tr>
+                <th>Rental #</th>
+                <th>Student</th>
+                <th>Book</th>
+                <th>Rental date</th>
+                <th>Due date</th>
+                <th>Return date</th>
+                <th>Return condition</th>
+                <th>Collected by</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            {% for r in rentals %}
+
+            <tr>
+
+                <!-- Rental ID -->
+                <td>
+                    {{ r.rental_id }}
+                </td>
+
+                <!-- Student information -->
+                <td>
+                    {{ r.first_name }}
+                    {{ r.last_name }}
+
+                    <small>
+                        {{ r.student_id }}
+                    </small>
+                </td>
+
+                <!-- Book information -->
+                <td>
+                    {{ r.title }}
+
+                    <small>
+                        {{ r.book_id }}
+                    </small>
+                </td>
+
+                <!-- Rental date -->
+                <td>
+                    {{ r.rental_date }}
+                </td>
+
+                <!-- Due date -->
+                <td>
+                    {{ r.due_date }}
+                </td>
+
+                <!-- Return date -->
+                <td>
+
+                    {% if r.return_date %}
+
+                        {{ r.return_date }}
+
+                    {% else %}
+
+                        <span class="hint">
+                            Not returned yet
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <!-- Condition recorded when returned -->
+                <td>
+
+                    {% if r.status == 'Returned' %}
+
+                        {% if r.return_condition == 'Good' %}
+
+                            <span class="condition-good">
+                                Good
+                            </span>
+
+                        {% elif r.return_condition == 'Fair' %}
+
+                            <span class="condition-fair">
+                                Fair
+                            </span>
+
+                        {% elif r.return_condition == 'Poor' %}
+
+                            <span class="condition-damaged">
+                                Poor
+                            </span>
+
+                        {% else %}
+
+                            <span class="hint">
+                                Not recorded
+                            </span>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <span class="hint">
+                            —
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <!-- Staff member who collected the return -->
+                <td>
+
+                    {% if r.status == 'Returned' %}
+
+                        {% if r.collected_by %}
+
+                            <strong>
+                                {{ r.collected_by }}
+                            </strong>
+
+                            {% if r.collector_role %}
+
+                                <small>
+                                    {% if r.collector_role == 'Admin' %}
+                                        Administrator
+                                    {% else %}
+                                        Staff
+                                    {% endif %}
+                                </small>
+
+                            {% endif %}
+
+                        {% else %}
+
+                            <span class="hint">
+                                Not recorded
+                            </span>
+
+                        {% endif %}
+
+                    {% else %}
+
+                        <span class="hint">
+                            —
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+                <!-- Rental status -->
+                <td>
+
+                    <span class="pill {{ 'good' if r.status == 'Returned' else 'warn' }}">
+
+                        {{ r.status }}
+
+                    </span>
+
+                </td>
+
+                <!-- Return action -->
+                <td>
+
+                    {% if r.status == 'Active' %}
+
+                        <!--
+                            A return must include the physical
+                            condition of the textbook.
+
+                            The collector is obtained from the
+                            authenticated session on the server.
+                        -->
+                        <form
+                            method="post"
+                            class="return-form"
+                            action="{{ url_for('pages.return_rental', rental_id=r.rental_id) }}"
+                            data-confirm="Confirm this textbook return with the selected condition?"
+                        >
+
+                            <label for="return-condition-{{ r.rental_id }}">
+                                Condition upon return
+                            </label>
+
+                            <select
+                                id="return-condition-{{ r.rental_id }}"
+                                name="return_condition"
+                                required
+                            >
+
+                                <option value="" selected disabled>
+                                    Select condition
+                                </option>
+
+                                <option value="Good">
+                                    Good
+                                </option>
+
+                                <option value="Fair">
+                                    Fair
+                                </option>
+
+                                <option value="Poor">
+                                    Poor
+                                </option>
+
+                            </select>
+
+                            <div class="return-collector">
+                                Collected by:
+                                <strong>
+                                    {{ session.get('username') }}
+                                </strong>
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="primary"
+                            >
+                                Confirm return
+                            </button>
+
+                        </form>
+
+                    {% else %}
+
+                        <span class="hint">
+                            Return completed
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+            {% else %}
+
+            <tr>
+                <td colspan="10">
+                    No matching rentals found.
+                </td>
+            </tr>
+
+            {% endfor %}
+
+        </tbody>
+
+    </table>
+
+</div>
+
+{% endblock %}

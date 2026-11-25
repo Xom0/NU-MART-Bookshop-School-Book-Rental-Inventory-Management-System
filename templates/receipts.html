@@ -1,0 +1,144 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Receipt History · Nu-Mart{% endblock %}
+
+{% block content %}
+
+<div class="page-heading">
+    <div>
+        
+
+        <h1>Receipt History</h1>
+
+        <p>
+            Search, view and reprint previously issued
+            textbook rental receipts.
+        </p>
+    </div>
+</div>
+
+<section class="panel">
+
+    <form
+        method="get"
+        action="{{ url_for('pages.receipts') }}"
+        class="stack"
+    >
+
+        <label>
+            Search receipts
+
+            <input
+                type="search"
+                name="q"
+                value="{{ query }}"
+                placeholder="Receipt number, student ID, name or processor"
+            >
+        </label>
+
+        <div class="button-group">
+
+            <button type="submit" class="primary">
+                Search
+            </button>
+
+            <a
+                class="button light"
+                href="{{ url_for('pages.receipts') }}"
+            >
+                Show All
+            </a>
+
+        </div>
+
+    </form>
+
+</section>
+
+<section class="panel">
+
+    <h2>Saved Rental Receipts</h2>
+
+    {% if receipts %}
+
+    <div style="overflow-x: auto;">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Receipt No.</th>
+                    <th>Student</th>
+                    <th>Student ID</th>
+                    <th>Date Issued</th>
+                    <th>Books</th>
+                    <th>Processed By</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for receipt in receipts %}
+
+                <tr>
+
+                    <td>
+                        <strong>
+                            #{{ '%05d'|format(receipt.receipt_id) }}
+                        </strong>
+                    </td>
+
+                    <td>
+                        {{ receipt.first_name }}
+                        {{ receipt.last_name }}
+                    </td>
+
+                    <td>
+                        {{ receipt.student_id }}
+                    </td>
+
+                    <td>
+                        {{ receipt.issued_at[:16].replace('T', ' ') }}
+                    </td>
+
+                    <td>
+                        {{ receipt.book_count }}
+                    </td>
+
+                    <td>
+                        {{ receipt.processed_by or 'Not recorded' }}
+                    </td>
+
+                    <td>
+                        <a
+                            class="button light"
+                            href="{{ url_for(
+                                'pages.receipt',
+                                receipt_id=receipt.receipt_id
+                            ) }}"
+                        >
+                            View / Print
+                        </a>
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+        <p>No matching receipts were found.</p>
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

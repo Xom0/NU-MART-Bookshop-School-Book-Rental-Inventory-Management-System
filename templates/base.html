@@ -1,0 +1,137 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <title>
+        {% block title %}Nu-Mart Bookshop{% endblock %}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+    <header class="top">
+
+        <!-- Bookshop branding -->
+        <div class="brand">
+
+            <span class="logo">NM</span>
+
+            <div>
+                <strong>Nu-Mart Bookshop</strong>
+
+                <small>
+                    School Rental &amp; Inventory Management
+                </small>
+            </div>
+
+        </div>
+
+        {% if session.get('user_id') %}
+
+        <!-- Main navigation -->
+        <nav aria-label="Main navigation">
+
+            <a href="{{ url_for('pages.index') }}">
+                Dashboard
+            </a>
+
+            <a href="{{ url_for('pages.books') }}">
+                Books
+            </a>
+
+            <a href="{{ url_for('pages.students') }}">
+                Students
+            </a>
+
+            <a href="{{ url_for('pages.rentals') }}">
+                Rentals
+            </a>
+
+            <!-- NEW: Receipt History -->
+            <a href="{{ url_for('pages.receipts') }}">
+                Receipts
+            </a>
+
+            <a href="{{ url_for('pages.reminders') }}">
+                Reminders
+            </a>
+
+        </nav>
+
+        <!-- Signed-in user information -->
+        <div class="account">
+
+            <span>
+                {{ session.get('username') }}
+                ·
+                {% if session.get('role') == 'Admin' %}
+                    Administrator
+                {% else %}
+                    Staff
+                {% endif %}
+            </span>
+
+            <form
+                method="post"
+                action="{{ url_for('pages.logout') }}"
+            >
+                <button
+                    type="submit"
+                    class="link-button"
+                >
+                    Log out
+                </button>
+            </form>
+
+        </div>
+
+        {% endif %}
+
+    </header>
+
+    <main class="container">
+
+        <!-- Display success and error messages -->
+        {% with notices = get_flashed_messages(with_categories=true) %}
+
+            {% for category, msg in notices %}
+
+                <div
+                    role="alert"
+                    class="alert {{ category }}"
+                >
+                    {{ msg }}
+                </div>
+
+            {% endfor %}
+
+        {% endwith %}
+
+        <!-- Individual page content -->
+        {% block content %}{% endblock %}
+
+    </main>
+
+    <footer>
+        Nu-Mart Bookshop · Group 5 · Prototype with sample records
+    </footer>
+
+    <script
+        src="{{ url_for('static', filename='js/main.js') }}"
+    ></script>
+
+</body>
+</html>

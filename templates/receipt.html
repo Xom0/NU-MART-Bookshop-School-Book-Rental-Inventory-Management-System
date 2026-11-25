@@ -1,0 +1,299 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Receipt {{ receipt.receipt_id }} · Nu-Mart
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .receipt-processor {
+        margin-top: 24px;
+        padding: 16px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+    }
+
+    .receipt-processor p {
+        margin: 6px 0;
+    }
+
+    .receipt-acknowledgement {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #d1d5db;
+    }
+
+    .receipt-acknowledgement h3 {
+        margin-bottom: 16px;
+        color: #24365b;
+        text-transform: uppercase;
+    }
+
+    .receipt-acknowledgement > p {
+        margin-bottom: 0;
+        line-height: 1.6;
+    }
+
+    .receipt-collector-name {
+        margin-top: 42px;
+    }
+
+    .receipt-signatures {
+        display: grid;
+        grid-template-columns: 3fr 1fr;
+        gap: 30px;
+        margin-top: 38px;
+    }
+
+    .receipt-signature-line {
+        height: 25px;
+        border-bottom: 2px solid #6b7280;
+    }
+
+    .receipt-signature-label {
+        margin-top: 7px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    @media (max-width: 600px) {
+        .receipt-signatures {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+    }
+
+    @media print {
+        .receipt-processor,
+        .receipt-acknowledgement,
+        .receipt-collector-name,
+        .receipt-signatures {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .receipt {
+            color: #000;
+        }
+
+        .receipt-acknowledgement h3,
+        .receipt-signature-label {
+            color: #000;
+        }
+
+        .receipt-signature-line {
+            border-bottom: 1px solid #000;
+        }
+
+        .receipt-signatures {
+            grid-template-columns: 3fr 1fr;
+        }
+    }
+</style>
+
+<!-- Page controls -->
+<div class="page-heading no-print">
+
+    <div>
+        <h1>Rental Receipt</h1>
+    </div>
+
+    <div class="button-group">
+
+        <button
+            type="button"
+            class="primary"
+            onclick="window.print()"
+        >
+            Print Receipt
+        </button>
+
+        <a
+            class="button light"
+            href="{{ url_for('pages.receipts') }}"
+        >
+            Back to Receipt History
+        </a>
+
+    </div>
+
+</div>
+
+<!-- Individual receipt -->
+<section class="panel receipt">
+
+    <!-- Receipt heading -->
+    <div class="receipt-head">
+
+        <div>
+            <h2>NU-MART BOOKSHOP</h2>
+
+            <p>
+                Merl Grove High School · Rental Receipt
+            </p>
+        </div>
+
+        <div>
+            <strong>
+                Receipt #{{ '%05d'|format(receipt.receipt_id) }}
+            </strong>
+
+            <p>
+                {{ receipt.issued_at[:16].replace('T', ' ') }}
+            </p>
+        </div>
+
+    </div>
+
+    <!-- Student information -->
+    <div class="receipt-info">
+
+        <p>
+            <strong>Student:</strong>
+            {{ receipt.first_name }}
+            {{ receipt.last_name }}
+        </p>
+
+        <p>
+            <strong>Student ID:</strong>
+            {{ receipt.student_id }}
+        </p>
+
+        <p>
+            <strong>Grade / Class:</strong>
+            {{ receipt.grade }} /
+            {{ receipt.class_name }}
+        </p>
+
+    </div>
+
+    <!-- Textbooks included in the transaction -->
+    <div style="overflow-x: auto;">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Book ID</th>
+                    <th>Textbook</th>
+                    <th>Edition</th>
+                    <th>Condition</th>
+                    <th>Due Date</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for i in items %}
+
+                <tr>
+                    <td>{{ i.book_id }}</td>
+                    <td>{{ i.title }}</td>
+                    <td>{{ i.edition }}</td>
+                    <td>{{ i.condition }}</td>
+                    <td>{{ i.due_date }}</td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <!-- Original transaction processor -->
+    <div class="receipt-processor">
+
+        <h3>Transaction Information</h3>
+
+        <p>
+            <strong>Processed By:</strong>
+            {{ receipt.processed_by or 'Not recorded' }}
+        </p>
+
+        <p>
+            <strong>Access Type:</strong>
+
+            {% if receipt.processed_by_role == 'Admin' %}
+                Administrator
+
+            {% elif receipt.processed_by_role == 'Staff' %}
+                Staff
+
+            {% else %}
+                Not recorded
+            {% endif %}
+        </p>
+
+        <p>
+            <strong>Date Issued:</strong>
+            {{ receipt.issued_at[:16].replace('T', ' ') }}
+        </p>
+
+    </div>
+
+    <!-- Collector acknowledgement -->
+    <div class="receipt-acknowledgement">
+
+        <h3>Collector Acknowledgement</h3>
+
+        <p>
+            I collected this textbook and agree to
+            return it by the deadline shown above.
+        </p>
+
+        <!-- Collector's printed full name -->
+        <div class="receipt-collector-name">
+
+            <div class="receipt-signature-line"></div>
+
+            <p class="receipt-signature-label">
+                Collector's full name (print)
+            </p>
+
+        </div>
+
+        <!-- Collector's signature and date -->
+        <div class="receipt-signatures">
+
+            <div>
+
+                <div class="receipt-signature-line"></div>
+
+                <p class="receipt-signature-label">
+                    Collector's signature (required)
+                </p>
+
+            </div>
+
+            <div>
+
+                <div class="receipt-signature-line"></div>
+
+                <p class="receipt-signature-label">
+                    Date
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <p class="receipt-note">
+        Please return all textbooks by their due dates
+        and keep this receipt for your records.
+    </p>
+
+    <p class="hint">
+        This receipt confirms the rental recorded
+        in the Nu-Mart system.
+    </p>
+
+</section>
+
+{% endblock %}

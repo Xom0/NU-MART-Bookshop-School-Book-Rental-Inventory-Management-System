@@ -1,0 +1,796 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Book Inventory · Nu-Mart
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .inventory-tabs {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .inventory-tabs .button {
+        text-decoration: none;
+    }
+
+    .inventory-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+    }
+
+    .inventory-stat {
+        padding: 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+    }
+
+    .inventory-stat strong {
+        display: block;
+        font-size: 24px;
+    }
+
+    .inventory-stat small {
+        display: block;
+        margin-top: 4px;
+    }
+
+    .inventory-search {
+        display: flex;
+        align-items: end;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .inventory-search label {
+        flex: 1;
+        min-width: 160px;
+    }
+
+    .inventory-id {
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .inventory-book-title {
+        font-weight: 600;
+    }
+
+    .inventory-subtext {
+        display: block;
+        font-size: 12px;
+        margin-top: 4px;
+        color: #64748b;
+    }
+
+    .inventory-actions {
+        white-space: nowrap;
+    }
+
+    .inventory-warning {
+        font-weight: 600;
+        color: #b91c1c;
+    }
+
+    .inventory-table-scroll {
+        overflow-x: auto;
+    }
+
+    /* Administrator page actions */
+    .inventory-page-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* CSV file import controls */
+    .csv-file-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .csv-file-selection {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .csv-file-selection[hidden] {
+        display: none;
+    }
+
+    .csv-file-name {
+        display: inline-block;
+        max-width: 280px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+        color: #334155;
+    }
+
+    .csv-clear-button {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 1px solid #cbd5e1;
+        border-radius: 50%;
+        background: #ffffff;
+        color: #b91c1c;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .csv-clear-button:hover {
+        background: #fef2f2;
+    }
+
+    .csv-clear-button:focus-visible {
+        outline: 3px solid #fca5a5;
+        outline-offset: 2px;
+    }
+
+    @media (max-width: 700px) {
+        .inventory-summary {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .inventory-page-actions {
+            width: 100%;
+        }
+
+        .inventory-page-actions .button {
+            flex: 1;
+            text-align: center;
+        }
+    }
+</style>
+
+<!-- Book inventory heading -->
+<div class="page-heading">
+
+    <div>
+        <h1>Book Inventory</h1>
+
+        <p>
+            Find textbook classifications and manage
+            their individual physical copies.
+        </p>
+    </div>
+
+    <!-- Administrator-only inventory management -->
+    {% if session.get('role') == 'Admin' %}
+
+        <div class="inventory-page-actions">
+
+            <a
+                class="button primary"
+                href="{{ url_for('pages.add_book') }}"
+            >
+                + Add Book
+            </a>
+
+            <a
+                class="button light"
+                href="{{ url_for('pages.remove_book_page') }}"
+            >
+                Remove Book
+            </a>
+
+        </div>
+
+    {% endif %}
+
+</div>
+
+<!-- Switch between textbook classifications and physical copies -->
+<div class="inventory-tabs">
+
+    <a
+        class="button {{ 'primary' if view == 'catalogue' else 'light' }}"
+        href="{{ url_for('pages.books', view='catalogue') }}"
+    >
+        Textbook Catalogue
+    </a>
+
+    <a
+        class="button {{ 'primary' if view == 'copies' else 'light' }}"
+        href="{{ url_for('pages.books', view='copies') }}"
+    >
+        Physical Copies
+    </a>
+
+</div>
+
+{% if view == 'catalogue' %}
+
+    <!-- Search the textbook catalogue -->
+    <div class="panel">
+
+        <h2>Textbook Catalogue</h2>
+
+        <p class="hint">
+            Each classification represents one textbook
+            title, subject and edition.
+        </p>
+
+        <form
+            method="get"
+            action="{{ url_for('pages.books') }}"
+            class="inventory-search"
+        >
+
+            <input
+                type="hidden"
+                name="view"
+                value="catalogue"
+            >
+
+            <label>
+                Search classifications
+
+                <input
+                    name="q"
+                    value="{{ query }}"
+                    placeholder="Title, subject or classification ID"
+                >
+            </label>
+
+            <button
+                type="submit"
+                class="primary"
+            >
+                Search
+            </button>
+
+            <a
+                class="button light"
+                href="{{ url_for('pages.books', view='catalogue') }}"
+            >
+                Show All
+            </a>
+
+        </form>
+
+    </div>
+
+    <!-- Classification results -->
+    <div class="panel table-wrap">
+
+        <h2>Textbook Classifications</h2>
+
+        <div class="inventory-table-scroll">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Classification ID</th>
+                        <th>Textbook</th>
+                        <th>Subject</th>
+                        <th>Edition</th>
+                        <th>Total Copies</th>
+                        <th>Rentable</th>
+                        <th>Rented</th>
+                        <th>Poor</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for c in classifications %}
+
+                        <tr>
+
+                            <td>
+                                <span class="inventory-id">
+                                    {{ c.classification_id }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="inventory-book-title">
+                                    {{ c.title }}
+                                </span>
+                            </td>
+
+                            <td>{{ c.subject }}</td>
+
+                            <td>{{ c.edition }}</td>
+
+                            <td>{{ c.total_copies }}</td>
+
+                            <td>
+                                <span class="pill good">
+                                    {{ c.rentable_copies }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="pill warn">
+                                    {{ c.rented_copies }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {% if c.poor_copies %}
+                                    <span class="inventory-warning">
+                                        {{ c.poor_copies }}
+                                    </span>
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </td>
+
+                            <td class="inventory-actions">
+
+                                <a
+                                    class="button light"
+                                    href="{{ url_for(
+                                        'pages.books',
+                                        view='copies',
+                                        classification_id=c.classification_id
+                                    ) }}"
+                                >
+                                    View Copies
+                                </a>
+
+                            </td>
+
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+                            <td colspan="9">
+                                No matching textbook classifications found.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+{% else %}
+
+    <!-- Physical copies search -->
+    <div class="panel">
+
+        {% if selected_classification %}
+
+            <div class="page-heading">
+
+                <div>
+
+                    <h2>
+                        {{ selected_classification.title }}
+                    </h2>
+
+                    <p>
+                        Classification:
+                        <strong>
+                            {{ selected_classification.classification_id }}
+                        </strong>
+                    </p>
+
+                    <p class="hint">
+                        {{ selected_classification.subject }}
+                        · Edition {{ selected_classification.edition }}
+                    </p>
+
+                </div>
+
+                <a
+                    class="button light"
+                    href="{{ url_for('pages.books', view='catalogue') }}"
+                >
+                    Back to Catalogue
+                </a>
+
+            </div>
+
+        {% else %}
+
+            <h2>Individual Physical Copies</h2>
+
+            <p class="hint">
+                Every Book ID identifies one physical textbook.
+            </p>
+
+        {% endif %}
+
+        <form
+            method="get"
+            action="{{ url_for('pages.books') }}"
+            class="inventory-search"
+        >
+
+            <input
+                type="hidden"
+                name="view"
+                value="copies"
+            >
+
+            {% if selected_classification %}
+
+                <input
+                    type="hidden"
+                    name="classification_id"
+                    value="{{ selected_classification.classification_id }}"
+                >
+
+            {% else %}
+
+                <label>
+                    Search by
+
+                    <select name="mode">
+
+                        <option
+                            value="title"
+                            {% if mode == 'title' %}selected{% endif %}
+                        >
+                            Title
+                        </option>
+
+                        <option
+                            value="id"
+                            {% if mode == 'id' %}selected{% endif %}
+                        >
+                            Exact Book ID
+                        </option>
+
+                    </select>
+                </label>
+
+            {% endif %}
+
+            <label>
+
+                {% if selected_classification %}
+                    Search copy ID
+                {% else %}
+                    Search term
+                {% endif %}
+
+                <input
+                    name="q"
+                    value="{{ query }}"
+                    placeholder="e.g. BK-MAT-001-001"
+                >
+
+            </label>
+
+            {% if selected_classification %}
+
+                <label>
+                    Rental eligibility
+
+                    <select name="status">
+
+                        <option
+                            value="All"
+                            {% if status == 'All' %}selected{% endif %}
+                        >
+                            All copies
+                        </option>
+
+                        <option
+                            value="Available"
+                            {% if status == 'Available' %}selected{% endif %}
+                        >
+                            Rentable
+                        </option>
+
+                        <option
+                            value="Rented"
+                            {% if status == 'Rented' %}selected{% endif %}
+                        >
+                            Rented
+                        </option>
+
+                        <option
+                            value="Not Rentable"
+                            {% if status == 'Not Rentable' %}selected{% endif %}
+                        >
+                            Not Rentable
+                        </option>
+
+                    </select>
+                </label>
+
+            {% endif %}
+
+            <button
+                type="submit"
+                class="primary"
+            >
+                Search
+            </button>
+
+            <a
+                class="button light"
+                href="{{ url_for(
+                    'pages.books',
+                    view='copies',
+                    classification_id=classification_id
+                ) }}"
+            >
+                Clear
+            </a>
+
+        </form>
+
+    </div>
+
+    <!-- Physical copy results -->
+    <div class="panel table-wrap">
+
+        <h2>Physical Copy Records</h2>
+
+        <div class="inventory-table-scroll">
+
+            <table>
+
+                <thead>
+                    <tr>
+                        <th>Book ID</th>
+                        <th>Textbook</th>
+                        <th>Classification</th>
+                        <th>Subject</th>
+                        <th>Edition</th>
+                        <th>Condition</th>
+                        <th>Availability</th>
+                        <th>Rental Eligibility</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for book in books %}
+
+                        <tr>
+
+                            <td>
+                                <span class="inventory-id">
+                                    {{ book.book_id }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {{ book.title }}
+                            </td>
+
+                            <td>
+                                {% if book.classification_id %}
+
+                                    <a
+                                        href="{{ url_for(
+                                            'pages.books',
+                                            view='copies',
+                                            classification_id=book.classification_id
+                                        ) }}"
+                                    >
+                                        {{ book.classification_id }}
+                                    </a>
+
+                                {% else %}
+
+                                    <span class="hint">
+                                        Not classified
+                                    </span>
+
+                                {% endif %}
+                            </td>
+
+                            <td>{{ book.subject }}</td>
+
+                            <td>{{ book.edition }}</td>
+
+                            <td>
+                                {% if book.condition == 'Poor' %}
+
+                                    <span class="inventory-warning">
+                                        Poor
+                                    </span>
+
+                                {% else %}
+
+                                    {{ book.condition }}
+
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <span class="pill {{ 'good' if book.availability == 'Available' else 'bad' }}">
+                                    {{ book.availability }}
+                                </span>
+                            </td>
+
+                            <td>
+                                {% if book.availability == 'Rented' %}
+
+                                    <span class="pill warn">
+                                        Rented
+                                    </span>
+
+                                {% elif book.condition in ('Good', 'Fair')
+                                    and book.availability == 'Available' %}
+
+                                    <span class="pill good">
+                                        Rentable
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="pill bad">
+                                        Not Rentable
+                                    </span>
+
+                                {% endif %}
+                            </td>
+
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+                            <td colspan="8">
+                                No matching physical copies found.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+{% endif %}
+
+<!-- Preserve existing CSV import/export functionality -->
+{% if session.get('role') == 'Admin' %}
+
+    <div class="panel">
+
+        <h2>Import / Export</h2>
+
+        <p class="hint">
+            Import textbook records from a CSV file,
+            or export the existing inventory.
+        </p>
+
+        <form
+            method="post"
+            action="{{ url_for('pages.import_books') }}"
+            enctype="multipart/form-data"
+            class="search"
+        >
+
+            <div class="csv-file-controls">
+
+                <!-- CSV file input -->
+                <input
+                    type="file"
+                    id="csv-file-input"
+                    name="csv_file"
+                    accept=".csv"
+                    required
+                >
+
+                <!-- Selected file and clear button -->
+                <div
+                    class="csv-file-selection"
+                    id="csv-file-selection"
+                    hidden
+                >
+
+                    <span
+                        class="csv-file-name"
+                        id="csv-file-name"
+                    ></span>
+
+                    <button
+                        type="button"
+                        class="csv-clear-button"
+                        id="csv-clear-button"
+                        aria-label="Clear selected CSV file"
+                        title="Remove selected file"
+                    >
+                        &times;
+                    </button>
+
+                </div>
+
+            </div>
+
+            <button type="submit">
+                Import CSV
+            </button>
+
+            <a
+                class="button light"
+                href="{{ url_for('pages.export_books') }}"
+            >
+                Export CSV
+            </a>
+
+        </form>
+
+    </div>
+
+{% endif %}
+
+<script>
+    // Allow a selected CSV file to be cleared.
+    // This only changes the file input in the browser.
+    // It does not delete or modify files on the computer.
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const fileInput = document.getElementById('csv-file-input');
+        const fileSelection = document.getElementById('csv-file-selection');
+        const fileName = document.getElementById('csv-file-name');
+        const clearButton = document.getElementById('csv-clear-button');
+
+        if (
+            !fileInput ||
+            !fileSelection ||
+            !fileName ||
+            !clearButton
+        ) {
+            return;
+        }
+
+        fileInput.addEventListener('change', function () {
+
+            if (fileInput.files.length > 0) {
+                fileName.textContent = fileInput.files[0].name;
+                fileSelection.hidden = false;
+            } else {
+                fileName.textContent = '';
+                fileSelection.hidden = true;
+            }
+
+        });
+
+        clearButton.addEventListener('click', function () {
+
+            fileInput.value = '';
+            fileName.textContent = '';
+            fileSelection.hidden = true;
+
+            // Allow another CSV file to be chosen.
+            fileInput.focus();
+
+        });
+
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,342 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Remove Book · Nu-Mart
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .removal-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .removal-option {
+        padding: 20px;
+    }
+
+    .removal-option h2 {
+        margin-top: 0;
+    }
+
+    .removal-option form {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .removal-option textarea {
+        width: 100%;
+        min-height: 125px;
+    }
+
+    .removal-preview {
+        margin-top: 24px;
+        border: 1px solid #e2a6a6;
+    }
+
+    .removal-warning {
+        color: #991b1b;
+        font-weight: 600;
+    }
+
+    .removal-preview-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .removal-danger-button {
+        background: #b91c1c;
+        color: white;
+        border: 1px solid #991b1b;
+        border-radius: 6px;
+        padding: 10px 18px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .removal-danger-button:hover {
+        background: #991b1b;
+    }
+
+    .removal-table {
+        max-height: 300px;
+        overflow: auto;
+    }
+
+    @media (max-width: 750px) {
+        .removal-options {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="page-heading">
+
+    <div>
+        <h1>Remove Book</h1>
+
+        <p>
+            Correct incorrectly entered physical copies
+            or textbook classifications.
+        </p>
+    </div>
+
+    <a
+        class="button light"
+        href="{{ url_for('pages.books', view='catalogue') }}"
+    >
+        Back to Inventory
+    </a>
+
+</div>
+
+<p class="hint">
+    Administrator access is required.
+    Textbooks with active or historical rentals
+    cannot be removed.
+</p>
+
+{% if not preview %}
+
+<div class="removal-options">
+
+    <!-- Remove physical copies -->
+    <section class="panel removal-option">
+
+        <h2>Remove Physical Copies</h2>
+
+        <p>
+            Use this option when extra or incorrect
+            physical copies were added to a textbook.
+        </p>
+
+        <form method="post">
+
+            <input
+                type="hidden"
+                name="operation"
+                value="copies"
+            >
+
+            <input
+                type="hidden"
+                name="action"
+                value="preview"
+            >
+
+            <label>
+                Physical Book IDs
+
+                <textarea
+                    name="book_ids"
+                    placeholder="BK-MAT-001-201&#10;BK-MAT-001-202"
+                    required
+                ></textarea>
+            </label>
+
+            <p class="hint">
+                Enter one Book ID per line or separate
+                multiple IDs using commas. Maximum: 500.
+            </p>
+
+            <button class="primary" type="submit">
+                Review Copies
+            </button>
+
+        </form>
+
+    </section>
+
+    <!-- Remove classification -->
+    <section class="panel removal-option">
+
+        <h2>Remove Classification</h2>
+
+        <p>
+            Use this option if an entire textbook
+            classification was added incorrectly.
+        </p>
+
+        <form method="post">
+
+            <input
+                type="hidden"
+                name="operation"
+                value="classification"
+            >
+
+            <input
+                type="hidden"
+                name="action"
+                value="preview"
+            >
+
+            <label>
+                Classification ID
+
+                <input
+                    name="classification_id"
+                    placeholder="e.g. BK-MAT-004"
+                    required
+                >
+            </label>
+
+            <p class="hint">
+                Removing a classification also removes
+                every physical copy linked to it.
+                This cannot be undone.
+            </p>
+
+            <button class="primary" type="submit">
+                Review Classification
+            </button>
+
+        </form>
+
+    </section>
+
+</div>
+
+{% else %}
+
+<!-- Preview the exact records before deletion -->
+<section class="panel removal-preview">
+
+    <h2>Confirm Removal</h2>
+
+    {% if preview.operation == 'copies' %}
+
+        <p>
+            You selected
+            <strong>{{ preview.count }}</strong>
+            physical textbook copies for removal.
+        </p>
+
+        <div class="removal-table table-wrap">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Book ID</th>
+                        <th>Title</th>
+                        <th>Edition</th>
+                        <th>Condition</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for book in preview.books %}
+                    <tr>
+                        <td>{{ book.book_id }}</td>
+                        <td>{{ book.title }}</td>
+                        <td>{{ book.edition }}</td>
+                        <td>{{ book.condition }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <p>
+            <strong>Classification:</strong>
+            {{ preview.classification.classification_id }}
+        </p>
+
+        <p>
+            <strong>Textbook:</strong>
+            {{ preview.classification.title }}
+        </p>
+
+        <p>
+            <strong>Subject:</strong>
+            {{ preview.classification.subject }}
+        </p>
+
+        <p>
+            <strong>Edition:</strong>
+            {{ preview.classification.edition }}
+        </p>
+
+        <p>
+            <strong>Physical copies to remove:</strong>
+            {{ preview.count }}
+        </p>
+
+    {% endif %}
+
+    <p class="removal-warning">
+        Warning: This permanently deletes the selected
+        inventory records. Confirm that these records
+        were added incorrectly before proceeding.
+    </p>
+
+    <form
+        method="post"
+        onsubmit="return confirm('Permanently remove the selected book records? This cannot be undone.');"
+    >
+
+        <input
+            type="hidden"
+            name="action"
+            value="confirm"
+        >
+
+        <input
+            type="hidden"
+            name="operation"
+            value="{{ preview.operation }}"
+        >
+
+        {% if preview.operation == 'copies' %}
+
+            <textarea
+                name="book_ids"
+                hidden
+            >{{ preview.book_ids }}</textarea>
+
+        {% else %}
+
+            <input
+                type="hidden"
+                name="classification_id"
+                value="{{ preview.classification_id }}"
+            >
+
+        {% endif %}
+
+        <div class="removal-preview-actions">
+
+            <button
+                type="submit"
+                class="removal-danger-button"
+            >
+                Confirm Removal
+            </button>
+
+            <a
+                class="button light"
+                href="{{ url_for('pages.remove_book_page') }}"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endif %}
+
+{% endblock %}

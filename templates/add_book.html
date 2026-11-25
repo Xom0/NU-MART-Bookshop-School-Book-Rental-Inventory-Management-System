@@ -1,0 +1,355 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Add Textbooks · Nu-Mart
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .book-add-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        align-items: start;
+    }
+
+    .book-add-panel {
+        min-width: 0;
+    }
+
+    .book-add-panel h2 {
+        margin-bottom: 10px;
+    }
+
+    .book-add-panel .stack {
+        margin-top: 20px;
+    }
+
+    .book-add-panel select,
+    .book-add-panel input {
+        width: 100%;
+    }
+
+    .book-add-help {
+        margin-top: 12px;
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .book-id-example {
+        padding: 12px;
+        margin-top: 16px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #f8fafc;
+    }
+
+    .book-id-example code {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .book-add-actions {
+        margin-top: 18px;
+    }
+
+    @media (max-width: 850px) {
+        .book-add-options {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+
+<div class="page-heading">
+
+    <div>
+        <p class="eyebrow">INVENTORY MANAGEMENT</p>
+
+        <h1>Add Textbooks</h1>
+
+        <p>
+            Create a textbook classification or add
+            more physical copies to an existing textbook.
+        </p>
+    </div>
+
+    <a
+        class="button light"
+        href="{{ url_for('pages.books', view='catalogue') }}"
+    >
+        Back to Inventory
+    </a>
+
+</div>
+
+
+<div class="book-add-options">
+
+    <!-- Create a new textbook classification -->
+    <section class="panel book-add-panel">
+
+        <h2>1. New Textbook</h2>
+
+        <p>
+            Create a new textbook classification and
+            generate its first physical copies.
+        </p>
+
+        <form
+            method="post"
+            action="{{ url_for('pages.add_book') }}"
+            class="stack"
+        >
+
+            <input
+                type="hidden"
+                name="operation"
+                value="new"
+            >
+
+            <label>
+                Textbook title
+
+                <input
+                    type="text"
+                    name="title"
+                    maxlength="200"
+                    placeholder="e.g. Mathematics for CSEC"
+                    required
+                >
+            </label>
+
+            <label>
+                Subject
+
+                <input
+                    type="text"
+                    name="subject"
+                    maxlength="120"
+                    placeholder="e.g. Mathematics"
+                    required
+                >
+            </label>
+
+            <label>
+                Edition
+
+                <select
+                    name="edition"
+                    required
+                >
+
+                    <option value="1">
+                        Edition 1 (Grade 9)
+                    </option>
+
+                    <option value="2">
+                        Edition 2 (Grades 10–11)
+                    </option>
+
+                    <option value="3">
+                        Edition 3 (Grades 12–13)
+                    </option>
+
+                </select>
+            </label>
+
+            <label>
+                Number of physical copies
+
+                <input
+                    type="number"
+                    name="quantity"
+                    min="1"
+                    max="500"
+                    value="1"
+                    required
+                >
+            </label>
+
+            <label>
+                Initial book condition
+
+                <select
+                    name="condition"
+                    required
+                >
+                    <option value="Good" selected>
+                        Good
+                    </option>
+
+                    <option value="Fair">
+                        Fair
+                    </option>
+
+                    <option value="Poor">
+                        Poor
+                    </option>
+                </select>
+            </label>
+
+            <p class="book-add-help">
+                A unique classification ID and individual
+                Book IDs will be generated automatically.
+                Poor-condition books cannot be rented.
+            </p>
+
+            <div class="book-id-example">
+                <strong>Example generated IDs</strong>
+
+                <p>
+                    Classification:
+                    <code>BK-MAT-001</code>
+                </p>
+
+                <p>
+                    Physical copies:
+                    <code>BK-MAT-001-001</code>,
+                    <code>BK-MAT-001-002</code>
+                </p>
+            </div>
+
+            <div class="book-add-actions">
+                <button
+                    type="submit"
+                    class="primary"
+                >
+                    Create Textbook &amp; Copies
+                </button>
+            </div>
+
+        </form>
+
+    </section>
+
+
+    <!-- Add additional copies to a known textbook -->
+    <section class="panel book-add-panel">
+
+        <h2>2. Add Copies</h2>
+
+        <p>
+            Select a textbook already in the catalogue
+            and add more physical copies without
+            re-entering its details.
+        </p>
+
+        <form
+            method="post"
+            action="{{ url_for('pages.add_book') }}"
+            class="stack"
+        >
+
+            <input
+                type="hidden"
+                name="operation"
+                value="existing"
+            >
+
+            <label>
+                Existing textbook classification
+
+                <select
+                    name="classification_id"
+                    required
+                >
+
+                    <option value="" selected disabled>
+                        Select a textbook
+                    </option>
+
+                    {% for c in classifications %}
+
+                        <option value="{{ c.classification_id }}">
+
+                            {{ c.classification_id }}
+                            —
+                            {{ c.title }}
+                            (Edition {{ c.edition }})
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+            </label>
+
+            <label>
+                Number of additional copies
+
+                <input
+                    type="number"
+                    name="quantity"
+                    min="1"
+                    max="500"
+                    value="1"
+                    required
+                >
+            </label>
+
+            <label>
+                Initial condition
+
+                <select
+                    name="condition"
+                    required
+                >
+
+                    <option value="Good" selected>
+                        Good
+                    </option>
+
+                    <option value="Fair">
+                        Fair
+                    </option>
+
+                    <option value="Poor">
+                        Poor
+                    </option>
+
+                </select>
+            </label>
+
+            <p class="book-add-help">
+                Existing physical copies will not be modified.
+                Only new copies will be added.
+            </p>
+
+            <div class="book-id-example">
+                <strong>Example</strong>
+
+                <p>
+                    If <code>BK-MAT-001</code> already contains
+                    an older copy called <code>BK001</code>,
+                    a new copy can receive
+                    <code>BK-MAT-001-001</code>.
+                </p>
+
+                <p>
+                    Both physical copies will belong to
+                    the same classification.
+                </p>
+            </div>
+
+            <div class="book-add-actions">
+
+                <button
+                    type="submit"
+                    class="primary"
+                    {% if not classifications %}disabled{% endif %}
+                >
+                    Add Physical Copies
+                </button>
+
+            </div>
+
+        </form>
+
+    </section>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,201 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+New rental · Nu-Mart
+{% endblock %}
+
+{% block content %}
+
+<div class="page-heading">
+    <div>
+
+
+        <h1>Issue textbooks</h1>
+
+        <p>
+            Verify the student, select available physical
+            copies, and create a printable receipt.
+        </p>
+    </div>
+</div>
+
+
+<div class="panel">
+
+    <!-- Explain the grade-to-edition mapping -->
+    <div class="tip">
+        <strong>Grade-to-edition rule:</strong>
+        Grade 9 → Edition 1;
+        Grades 10–11 → Edition 2;
+        Grades 12–13 → Edition 3.
+    </div>
+
+
+    <!-- New rental form -->
+    <form method="post" class="form-grid">
+
+        <!-- Student selection -->
+        <label>
+            Student ID
+
+            <input
+                name="student_id"
+                list="student-ids"
+                placeholder="e.g. ST001"
+                required
+            >
+
+            <datalist id="student-ids">
+
+                {% for s in students if s.enrolment_status == 'Active' %}
+
+                    <option value="{{ s.student_id }}">
+                        {{ s.first_name }}
+                        {{ s.last_name }}
+                        · Grade {{ s.grade }}
+                    </option>
+
+                {% endfor %}
+
+            </datalist>
+        </label>
+
+
+        <!-- Due date -->
+        <label>
+            Due date
+
+            <input
+                type="date"
+                name="due_date"
+                value="{{ default_due }}"
+                required
+            >
+        </label>
+
+
+        <!-- Physical textbook IDs -->
+        <label class="wide">
+
+            Book IDs (separate multiple books with commas or new lines)
+
+            <textarea
+                name="book_ids"
+                rows="4"
+                placeholder="e.g. BK-MAT-002-001, BK-ENG-001-001 (or legacy IDs: BK001)"
+                required
+            ></textarea>
+
+            <small>
+                Enter the unique physical Book ID for each
+                textbook, separated by commas or new lines.
+                Each copy must be available, in Good or Fair
+                condition, and match the student's
+                grade-to-edition requirement.
+            </small>
+
+        </label>
+
+
+        <!-- Form actions -->
+        <div class="form-actions">
+
+            <button class="primary" type="submit">
+                Save rental &amp; generate receipt
+            </button>
+
+            <a
+                class="button light"
+                href="{{ url_for('pages.rentals') }}"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- Reference table of rentable physical textbook copies -->
+<div class="panel">
+
+    <h2>Available Physical Copies</h2>
+
+    <p class="hint">
+        The table below lists physical textbooks that are
+        available for rental and in Good or Fair condition.
+        Use the individual Book ID when issuing a textbook.
+        Poor-condition copies are excluded.
+    </p>
+
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Physical Book ID</th>
+                    <th>Textbook Title</th>
+                    <th>Edition</th>
+                    <th>Condition</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for b in books
+                    if b.availability == 'Available'
+                    and b.condition in ('Good', 'Fair') %}
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                {{ b.book_id }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {{ b.title }}
+                        </td>
+
+                        <td>
+                            {{ b.edition }}
+                        </td>
+
+                        <td>
+                            {{ b.condition }}
+                        </td>
+
+                        <td>
+                            <span class="pill good">
+                                Rentable
+                            </span>
+                        </td>
+
+                    </tr>
+
+                {% else %}
+
+                    <tr>
+                        <td colspan="5">
+                            No rentable physical textbooks
+                            are currently available.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

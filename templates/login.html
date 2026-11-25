@@ -1,0 +1,145 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Sign in · Nu-Mart{% endblock %}
+
+{% block content %}
+
+<style>
+    .access-type-options {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+    .access-option {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .access-option input {
+        position: absolute;
+        opacity: 0;
+        width: 1px;
+        height: 1px;
+    }
+
+    .access-option-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #24365b;
+        font-weight: 600;
+    }
+
+    .access-option input:checked + .access-option-content {
+        background: #e8efff;
+        border-color: #31529a;
+        color: #24478f;
+    }
+
+    .access-option input:focus-visible + .access-option-content {
+        outline: 3px solid #93b4ff;
+        outline-offset: 3px;
+    }
+
+    .access-type-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+</style>
+
+<section class="login-box panel">
+
+    <p class="eyebrow">BOOKSHOP ACCESS</p>
+
+    <h1>Welcome back</h1>
+
+    <p>
+        Enter your name, choose your access type
+        and sign in to manage the bookshop.
+    </p>
+
+    <form method="post" class="stack">
+
+        <div>
+            <span class="access-type-label">
+                Access type
+            </span>
+
+            <div class="access-type-options">
+
+                <label class="access-option">
+                    <input
+                        type="radio"
+                        name="access_type"
+                        value="Staff"
+                        checked
+                        required
+                    >
+
+                    <span class="access-option-content">
+                        Staff
+                    </span>
+                </label>
+
+                <label class="access-option">
+                    <input
+                        type="radio"
+                        name="access_type"
+                        value="Administrator"
+                        required
+                    >
+
+                    <span class="access-option-content">
+                        Administrator
+                    </span>
+                </label>
+
+            </div>
+        </div>
+
+        <label>
+            Your name
+
+            <input
+                name="username"
+                autocomplete="username"
+                placeholder="Enter your full name"
+                maxlength="80"
+                required
+                autofocus
+            >
+        </label>
+
+        <label>
+            Password
+
+            <input
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter the access type password"
+                required
+            >
+        </label>
+
+        <button type="submit" class="primary">
+            Sign in
+        </button>
+
+    </form>
+
+    <p class="hint">
+        Use the password assigned to your selected access type.
+    </p>
+
+</section>
+
+{% endblock %}

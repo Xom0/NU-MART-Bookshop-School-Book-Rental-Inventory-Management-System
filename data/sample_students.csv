@@ -1,0 +1,5 @@
+student_id,first_name,last_name,grade,class_name,enrolment_status
+ST001,Alicia,Brown,9,9A,Active
+ST002,Marcus,James,10,10B,Active
+ST003,Shanice,Williams,12,12A,Active
+ST004,Talia,Grant,11,11C,Inactive
